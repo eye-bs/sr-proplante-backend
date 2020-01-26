@@ -56,7 +56,7 @@ app.use("/reports", reportRoutes);
 //-------side---------------
 app.use("/sec/lands", sideLandsRoutes);
 
-app.use("/health", (req, res, next) => {
+app.use("/healthy", (req, res, next) => {
   res.status(200).send("server-health");
 });
 
