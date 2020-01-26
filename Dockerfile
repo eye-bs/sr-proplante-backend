@@ -1,4 +1,13 @@
 FROM node:12
 
+WORKDIR /usr/src/app
 
-// create image of nodejs
+COPY package*.json ./
+
+RUN npm install
+
+COPY . .
+
+EXPOSE 8080
+
+CMD ["npm", "start"]
