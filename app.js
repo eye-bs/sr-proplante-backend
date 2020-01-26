@@ -12,7 +12,6 @@ const operationsRoute = require("./api/routes/operationRoutes");
 const plantRoutes = require("./api/routes/plantsRoutes");
 const activitiesRoutes = require("./api/routes/activitiesRoutes");
 const reportRoutes = require("./api/routes/reportRoutes");
-const uploads = require("./api/routes/upload");
 
 //side function
 const sideLandsRoutes = require("./api/routes/sideLandsRoutes");
@@ -55,7 +54,6 @@ app.use("/activities", activitiesRoutes);
 app.use("/reports", reportRoutes);
 //-------side---------------
 app.use("/sec/lands", sideLandsRoutes);
-app.use("/aws", uploads);
 
 app.use("/health", (req, res, next) => {
   res.status(200).send("server-health");
