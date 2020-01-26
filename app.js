@@ -15,7 +15,8 @@ const reportRoutes = require("./api/routes/reportRoutes");
 
 //side function
 const sideLandsRoutes = require("./api/routes/sideLandsRoutes");
-const dburl = "68.183.230.159"
+//const dburl = "68.183.230.159"
+const dburl = "pp-db"
 
 mongoose.connect(
   "mongodb://" + dburl,
