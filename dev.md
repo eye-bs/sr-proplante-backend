@@ -1,3 +1,19 @@
+## api
+### start
+```bash
+docker-compose up -d
+```
+
+### stop
+```bash
+docker-compose down
+```
+
+### show logs
+```bash
+docker logs -f pp-api
+```
+
 ## database (mongodb)
 ### start
 ```bash
