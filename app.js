@@ -15,12 +15,13 @@ const reportRoutes = require("./api/routes/reportRoutes");
 
 //side function
 const sideLandsRoutes = require("./api/routes/sideLandsRoutes");
+const dburl = "68.183.230.159"
 
 mongoose.connect(
-  "mongodb+srv://admin:admin123@cluster0-odrr2.gcp.mongodb.net/Proplante?retryWrites=true&w=majority",
+  "mongodb://" + dburl,
   function(err) {
     if (err) throw err;
-    console.log("Connect to MongoDB Atlas successful!");
+    console.log("Connect to MongoDB at " + dburl + " successful!");
   }
 );
 
