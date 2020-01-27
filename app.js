@@ -15,14 +15,14 @@ const reportRoutes = require("./api/routes/reportRoutes");
 
 //side function
 const sideLandsRoutes = require("./api/routes/sideLandsRoutes");
-//const dburl = "68.183.230.159"
+// const dburl = "68.183.230.159"
 const dburl = "pp-db"
 
 mongoose.connect(
-  "mongodb://" + dburl,
+  "mongodb://" + dburl + "/proplanteDB",
   function(err) {
     if (err) throw err;
-    console.log("Connect to MongoDB at " + dburl + " successful!");
+    console.log("(∩｀-´)⊃━✿✿✿✿✿✿ -Connect to Proplante MongoDB at '" + dburl + "' successful!- ★★★★★★≡≡＼（`△´＼）");
   }
 );
 
