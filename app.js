@@ -12,19 +12,22 @@ const operationsRoute = require("./api/routes/operationRoutes");
 const plantRoutes = require("./api/routes/plantsRoutes");
 const activitiesRoutes = require("./api/routes/activitiesRoutes");
 const reportRoutes = require("./api/routes/reportRoutes");
+const mongoUpload = require("./api/routes/mongoUpload");
 
 //side function
 const sideLandsRoutes = require("./api/routes/sideLandsRoutes");
-// const dburl = "68.183.230.159"
-const dburl = "pp-db"
 
-mongoose.connect(
-  "mongodb://" + dburl + "/proplanteDB",
-  function(err) {
-    if (err) throw err;
-    console.log("(∩｀-´)⊃━✿✿✿✿✿✿ -Connect to Proplante MongoDB at '" + dburl + "' successful!- ★★★★★★≡≡＼（`△´＼）");
-  }
-);
+const dburl = "68.183.230.159:27017"
+// const dburl = "pp-db";
+
+mongoose.connect("mongodb://" + dburl + "/proplanteDB", function(err) {
+  if (err) throw err;
+  console.log(
+    "(∩｀-´)⊃━✿✿✿✿✿✿ -Connect to Proplante MongoDB at '" +
+      dburl +
+      "' successful!- ★★★★★★≡≡＼（`△´＼）"
+  );
+});
 
 app.use(morgan("dev"));
 app.use(bodyParser.urlencoded({ extended: false }));
@@ -56,6 +59,7 @@ app.use("/activities", activitiesRoutes);
 app.use("/reports", reportRoutes);
 //-------side---------------
 app.use("/sec/lands", sideLandsRoutes);
+app.use("/images", mongoUpload);
 
 app.use("/healthy", (req, res, next) => {
   res.status(200).send("server-health");

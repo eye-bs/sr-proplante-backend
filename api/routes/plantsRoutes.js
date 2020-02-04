@@ -190,12 +190,38 @@ router.post("/activity/:plantid", async (req, res) => {
             if (docs.n == 0 || docs.nModified == 0) {
               res.status(400).send("something went wrong");
             } else {
-              res.status(201).send(newActivity);
+              operationUpdate()
             }
           }
         }
       }
     );
+  }
+  function operationUpdate(){
+    var actiivityObj =  {
+      images : [],
+      _id: _id,
+      status : "ยังไม่ทำ",
+      activity_type : "normal",
+      end_date : null,
+      notes : null,
+      manager_id : null
+  }
+    operationCollection.update(
+      {"logs.plant_id" : plant_id},
+      {
+        $push: {
+          "logs.activities":actiivityObj
+        }
+      },(err,data) => {
+        if(err){
+          res.status(500).send(err.message);
+        }else{
+          console.log("data" , data);
+            res.send("updated successfully");
+        }
+      }
+    )
   }
 });
 
@@ -263,13 +289,19 @@ router.delete("/activity/:plantid", (req, res, next) => {
     { "plants._id": plant_id },
     {
       $pull: {
-        "plants.activities": { _id: activity_id }
+        // plants:{activities:{$elemMatch:{_id:activity_id}}}
+        "plants.$[target].activities": {_id:activity_id}
       }
+    },
+    {
+      multi: false,
+      arrayFilters: [{ "target._id": plant_id }]
     },
     (err, docs) => {
       if (err) {
         res.status(500).send(err.message);
       } else {
+        console.log("docs")
         if (docs.n == 0 || docs.nModified == 0) {
           res.status(400).send("delete failed , something went wrong");
         } else {
@@ -284,7 +316,8 @@ router.delete("/activity/:plantid", (req, res, next) => {
       { "logs.plant_id": plant_id },
       {
         $pull: {
-          "logs.activities": { _id: activity_id }
+          // logs:{activities:{$elemMatch:{_id:activity_id}}}
+          "logs.activities": {_id:activity_id}
         }
       },
       (err, docs) => {

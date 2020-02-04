@@ -7,9 +7,9 @@ const multer = require("multer");
 const GridFsStorage = require("multer-gridfs-storage");
 const Grid = require("gridfs-stream");
 const methodOverride = require("method-override");
-
-const mongoURI =
-  "mongodb+srv://admin:admin123@proplante-1o7jz.mongodb.net/Proplante?retryWrites=true&w=majority";
+const dburl = "68.183.230.159:27017"
+// const dburl = "pp-db";
+const mongoURI = "mongodb://" + dburl + "/proplanteDB";
 const conn = mongoose.createConnection(mongoURI);
 let gfs;
 
@@ -25,9 +25,9 @@ const storage = new GridFsStorage({
     var fileName;
     if (req.query.land != undefined || req.query.land != null) {
       fileName = req.query.land + "_" + Date.now() + ".png";
-    }else if(req.query.manager != undefined || req.query.manager != null) {
+    } else if (req.query.manager != undefined || req.query.manager != null) {
       fileName = req.query.owner + "_" + req.query.manager + ".png";
-    }else{
+    } else {
       fileName = req.query.owner + "_" + Date.now() + ".png";
     }
     return new Promise((resolve, reject) => {
@@ -134,29 +134,8 @@ router.delete("/files/:id", (req, res) => {
     if (err) {
       return res.status(404).json({ err: err });
     }
-    res.redirect("/");
+    res.send("delete image successfully")
   });
 });
-
-// router.get("/", (req, res) => {
-//   gfs.files.find().toArray((err, files) => {
-//     // Check if files
-//     if (!files || files.length === 0) {
-//       res.render("index", { files: false });
-//     } else {
-//       files.map(file => {
-//         if (
-//           file.contentType === "image/jpeg" ||
-//           file.contentType === "image/png"
-//         ) {
-//           file.isImage = true;
-//         } else {
-//           file.isImage = false;
-//         }
-//       });
-//       res.render("index", { files: files });
-//     }
-//   });
-// });
 
 module.exports = router;

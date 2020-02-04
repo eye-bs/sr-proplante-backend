@@ -265,7 +265,7 @@ router.put("/:managerid", (req, res, next) => {
   );
 });
 
-router.put("/quit/:managerid", (req, res) => {
+router.delete("/quit/:managerid", (req, res) => {
   var owner_id = req.query.owner;
   var managerId = req.params.managerid;
   managerCollection.findOneAndUpdate(

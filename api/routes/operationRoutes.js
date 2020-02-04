@@ -194,11 +194,68 @@ router.post("/harvested/:landid", (req, res, next) => {
             docs.logs.real_product = real_product;
             docs.logs.performance =
               (real_product * 100) / docs.logs.expected_product;
-            sendReport(docs);
+            // sendReport(docs);
+            setPlantName(docs);
           }
         }
       }
     );
+
+    function setPlantName(docs) {
+      var logs = docs.logs;
+      var activities = logs.activities;
+      var plant_id = logs.plant_id;
+      plantCollection.findOne(
+        { "plants._id": plant_id },
+        { "plants.$": 1 },
+        (err, plant) => {
+          if (err) {
+            res.status(500).send(err.message);
+          } else {
+            var plantName = { plant_name: plant.plants[0].name };
+            var newFilter = Object.assign({}, plantName, logs);
+            for (i in activities) {
+              for (j in plant.plants[0].activities) {
+                var plantAc = plant.plants[0].activities[j];
+                if (plantAc._id == activities[i]._id) {
+                  var task = { task: plantAc.tasks };
+                  var activity = activities[i];
+
+                  var duration = plantAc.duration * 7 - 7;
+                  var startCycle = new Date(logs.start_date);
+                  startCycle.setDate(startCycle.getDate() + duration);
+                  var activityDate = getMonday(startCycle);
+
+                  var tzo = -activityDate.getTimezoneOffset() / 60;
+                  tzo = (tzo + "").padStart(2, "0");
+                  activityDate = new Date(
+                    activityDate.getTime() -
+                      activityDate.getTimezoneOffset() * 60000
+                  );
+                  var tsp = activityDate.toISOString();
+                  tsp = tsp.replace("Z", `+${tzo}:00`);
+                  var newActivity = {
+                    _id: activity._id,
+                    task: plantAc.tasks,
+                    status: activity.status,
+                    activity_type: activity.activity_type,
+                    start_date: tsp,
+                    end_date: activity.end_date,
+                    notes: activity.notes,
+                    images: activity.images,
+                    manager_id: activity.manager_id
+                  };
+                  activities[i] = newActivity;
+                  break;
+                }
+              }
+            }
+            logs.activities = activities;
+            sendReport(newFilter)
+          }
+        }
+      );
+    }
 
     function sendReport(logs) {
       reportCollection.update(
@@ -207,7 +264,7 @@ router.post("/harvested/:landid", (req, res, next) => {
         },
         {
           $push: {
-            logs: logs.logs
+            logs: logs
           }
         },
         function(err, docs) {
@@ -260,15 +317,15 @@ router.post("/percent", (req, res) => {
       for (let i = 0; i < result.length; i++) {
         done = 0;
         var activities = result[i].logs.activities || undefined;
-        if(activities == undefined){
+        if (activities == undefined) {
           var obj = {
             land_id: land_id[i],
             percent: 0
-          }
+          };
           response.push(obj);
           continue;
         }
-        total = activities.length
+        total = activities.length;
         for (let j = 0; j < activities.length; j++) {
           var activity = activities[j];
           if (activity.status == "เสร็จแล้ว") {
@@ -277,8 +334,8 @@ router.post("/percent", (req, res) => {
         }
         var obj = {
           land_id: land_id[i],
-          percent: (done*100 / total)
-        }
+          percent: (done * 100) / total
+        };
         response.push(obj);
       }
       res.status(200).send(response);
