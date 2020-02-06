@@ -212,6 +212,7 @@ router.post("/harvested/:landid", (req, res, next) => {
           if (err) {
             res.status(500).send(err.message);
           } else {
+            console.log(plant)
             var plantName = { plant_name: plant.plants[0].name };
             var newFilter = Object.assign({}, plantName, logs);
             for (i in activities) {
@@ -276,8 +277,8 @@ router.post("/harvested/:landid", (req, res, next) => {
                 land_id: land_id
               },
               {
-                $unset: {
-                  logs: ""
+                $set: {
+                  logs: {activities:[]}
                 }
               },
               function(err, docs) {
