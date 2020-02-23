@@ -14,8 +14,7 @@ router.post("/:ownerid", (req, res, next) => {
   var plant_id = new mongoose.Types.ObjectId();
   var name = req.body.name;
   var cover_image = req.body.cover_image;
-
-  if (name == undefined || cover_image == undefined) {
+  if (name == undefined) {
     res.status(400).send("plant details must be specified");
   } else {
     var plantObj = {

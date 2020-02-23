@@ -36,9 +36,10 @@ router.get("/:ownerid", (req, res, next) => {
       } else {
         var results = [];
         for (let i = 0; i < operations.length; i++) {
+          var findOp = operations.find(({land_id})=> land_id == lands[i]._id)
           var obj = {
             land: lands[i],
-            operation: operations[i]
+            operation: findOp
           };
           results.push(obj);
         }

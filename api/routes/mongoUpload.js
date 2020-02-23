@@ -23,7 +23,10 @@ const storage = new GridFsStorage({
   url: mongoURI,
   file: (req, file) => {
     var fileName;
-    if (req.query.land != undefined || req.query.land != null) {
+    if(req.query.file_name != undefined){
+      fileName = req.query.file_name + ".png";
+    }
+    else if (req.query.land != undefined || req.query.land != null) {
       fileName = req.query.land + "_" + Date.now() + ".png";
     } else if (req.query.manager != undefined || req.query.manager != null) {
       fileName = req.query.owner + "_" + req.query.manager + ".png";

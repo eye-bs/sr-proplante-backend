@@ -252,7 +252,7 @@ router.post("/harvested/:landid", (req, res, next) => {
               }
             }
             logs.activities = activities;
-            newFilter.sort(dynamicSort("end_date"));
+            newFilter.activities.sort(dynamicSort("end_date"));
             sendReport(newFilter)
           }
         }
@@ -349,8 +349,8 @@ router.post("/percent", (req, res) => {
           }
         }
         var obj = {
-          land_id: land_id[i],
-          percent: (done * 100) / total
+          land_id: result[i].land_id,
+          percent: (done * 100) / total | 0
         };
         response.push(obj);
       }

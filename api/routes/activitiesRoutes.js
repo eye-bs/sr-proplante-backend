@@ -147,7 +147,7 @@ router.get("/:ownerId", (req, res, next) => {
               end_date: activities[j].end_date,
               plant_name: plants[k].plant_name,
               task: activities[j].task,
-              status: activities[j].status, 
+              status: activities[j].status,
               images: activities[j].images,
               manager_id: activities[j].manager_id,
               notes: activities[j].notes
@@ -177,7 +177,7 @@ router.get("/:ownerId", (req, res, next) => {
               end_date: activities[j].end_date,
               plant_name: plants[k].plant_name,
               task: plants[k].tasks,
-              status: activities[j].status, 
+              status: activities[j].status,
               images: activities[j].images,
               manager_id: activities[j].manager_id,
               notes: activities[j].notes
@@ -446,6 +446,7 @@ router.post("/:landid", (req, res, next) => {
       }
     );
   }
+
 });
 
 //remove op cycle activity
