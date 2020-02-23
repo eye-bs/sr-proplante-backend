@@ -67,7 +67,6 @@ router.get("/:ownerId", (req, res, next) => {
           if (data.length == 0) {
             res.status(404).send("owner not found / land not found");
           } else {
-            //res.status(200).send(data);
             queryByDate(data, docs);
           }
           // res.status(200).send(docs);
@@ -102,8 +101,7 @@ router.get("/:ownerId", (req, res, next) => {
           if (results.length == 0) {
             res.status(404).send("owner not found / land not found");
           } else {
-            //res.status(200).send(results);
-            // queryByDate(data);
+
             var plantAc = [];
             var acti = results[0].activities;
             for (let i = 0; i < acti.length; i++) {
@@ -118,8 +116,6 @@ router.get("/:ownerId", (req, res, next) => {
                 plantAc.push(obj);
               }
             }
-            //res.send(results);
-            //res.send(plantAc)
             setResult(newLandArr, op, plantAc);
           }
         }
@@ -129,88 +125,54 @@ router.get("/:ownerId", (req, res, next) => {
 
   function setResult(lands, op, plants) {
     var response = [];
-    for (let i = 0; i < op.length; i++) {
-      var activities = op[i].activities;
-      var plant_id = op[i].plant_id;
-      for (let j = 0; j < activities.length; j++) {
-        for (let k = 0; k < plants.length; k++) {
-          var object;
-          if (
-            plant_id == plants[k].plant_id &&
-            activities[j].activity_type == "emergency"
-          ) {
-            object = {
-              land_name: lands[op[i]._id],
-              land_id: op[i]._id,
-              activity_id: activities[j]._id,
-              start_date: activities[j].end_date,
-              end_date: activities[j].end_date,
-              plant_name: plants[k].plant_name,
-              task: activities[j].task,
-              status: activities[j].status,
-              images: activities[j].images,
-              manager_id: activities[j].manager_id,
-              notes: activities[j].notes
-            };
-            response.push(object);
-            k = plants.length;
-            continue;
-          }
-          if (activities[j]._id == plants[k]._id) {
-            var st_date = new Date(op[i].start_date);
-            var duration = plants[k].duration * 7 - 7;
-            st_date.setDate(st_date.getDate() + duration);
-            var activityDate = getMonday(st_date);
-            var tzo = -activityDate.getTimezoneOffset() / 60;
-            tzo = (tzo + "").padStart(2, "0");
-            activityDate = new Date(
-              activityDate.getTime() - activityDate.getTimezoneOffset() * 60000
-            );
-            var tsp = activityDate.toISOString();
-            tsp = tsp.replace("Z", `+${tzo}:00`);
-
-            object = {
-              land_name: lands[op[i]._id],
-              land_id: op[i]._id,
-              activity_id: activities[j]._id,
-              start_date: tsp,
-              end_date: activities[j].end_date,
-              plant_name: plants[k].plant_name,
-              task: plants[k].tasks,
-              status: activities[j].status,
-              images: activities[j].images,
-              manager_id: activities[j].manager_id,
-              notes: activities[j].notes
-            };
-
-            response.push(object);
-          }
-
-          if (
-            i == op.length &&
-            j == activities.length - 1 &&
-            k == plants.length - 1
-          ) {
-            if (byLands) {
-              response.sort(dynamicSort("land_name"));
-            } else {
-              response.sort(dynamicSort("start_date"));
-            }
-            res.status(200).send(response);
-          }
-        }
-      }
-      if (i == op.length - 1 && activities.length == 0) {
-        if (byLands) {
+    op.forEach(operation =>{
+      var activities = operation.activities;
+      var plant_id = operation.plant_id;
+      activities.forEach(activity =>{
+        var object;
+        var plant = plants.find(x => x._id == activity._id) || plants.find(x => x.plant_id == plant_id);
+        var simpleStartDate = computeDurationDate(operation.start_date , plant.duration);
+        object = {
+          land_name: lands[operation._id],
+          land_id: operation._id,
+          activity_id: activity._id,
+          start_date: activity.activity_type == "emergency" ? activity.end_date : simpleStartDate,
+          end_date: activity.end_date,
+          plant_name: plant.plant_name,
+          task: activity.task || plant.tasks,
+          status: activity.status,
+          images: activity.images,
+          manager_id: activity.manager_id,
+          notes: activity.notes
+        };
+        response.push(object);
+      })
+    })
+      if (byLands) {
           response.sort(dynamicSort("land_name"));
         } else {
           response.sort(dynamicSort("start_date"));
         }
         res.status(200).send(response);
-      }
-    }
+
   }
 });
+
+function computeDurationDate(start_date , duration){
+  var st_date = new Date(start_date);
+        var duration = duration * 7 - 7;
+        st_date.setDate(st_date.getDate() + duration);
+        var activityDate = getMonday(st_date);
+        var tzo = -activityDate.getTimezoneOffset() / 60;
+        tzo = (tzo + "").padStart(2, "0");
+        activityDate = new Date(
+          activityDate.getTime() - activityDate.getTimezoneOffset() * 60000
+        );
+        var tsp = activityDate.toISOString();
+        tsp = tsp.replace("Z", `+${tzo}:00`);
+
+        return tsp
+}
 
 function getMonday(d) {
   d = new Date(d);
