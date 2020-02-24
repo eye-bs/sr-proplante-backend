@@ -19,7 +19,6 @@ const sideLandsRoutes = require("./api/routes/sideLandsRoutes");
 
 const dburl = "68.183.230.159:27017"
 // const dburl = "pp-db";
-
 mongoose.connect("mongodb://" + dburl + "/proplanteDB", function(err) {
   if (err) throw err;
   console.log(

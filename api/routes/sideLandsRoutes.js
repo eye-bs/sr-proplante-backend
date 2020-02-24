@@ -85,9 +85,6 @@ router.post("/filter", (req, res, next) => {
   var arr = fDis.filter(value => fPro.includes(value))
   arr = arr.filter(value => fName.includes(value))
   arr = arr.filter(value => fPlant.includes(value))
-console.log("------------")
-  console.log(arr)
-console.log("------------")
   res.status(200).send(arr);
 
 
