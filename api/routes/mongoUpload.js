@@ -24,7 +24,7 @@ const storage = new GridFsStorage({
   file: (req, file) => {
     var fileName;
     if(req.query.file_name != undefined){
-      fileName = req.query.file_name + ".png";
+      fileName = req.query.file_name ;
     }
     else if (req.query.land != undefined || req.query.land != null) {
       fileName = req.query.land + "_" + Date.now() + ".png";

@@ -55,56 +55,92 @@ router.post("/filter", (req, res, next) => {
   var landsData = req.body.lands;
   var plantData = req.body.plants;
 
-  var afFilters = [];
-  if (province != "all") {
-    for (let i = 0; i < landsData.length; i++) {
-      if (landsData[i].land.province == province) {
-        afFilters.push(landsData[i]);
-      }
-    }
-  } else {
-    afFilters = landsData;
-  }
-  if (district != "all") {
-    var districtFilter = [];
-    for (let i = 0; i < afFilters.length; i++) {
-      if (afFilters[i].land.district == district) {
-        districtFilter.push(afFilters[i]);
-      }
-    }
-    afFilters = districtFilter;
-  }
+  var fDis = [];
+  var fPro = [];
+  var fName = [];
+  var fPlant = [];
 
-  if (plant != "all") {
-    for (let j = 0; j < plantData.length; j++) {
-      if (plantData[j].name == plant) {
-        plant = plantData[j]._id;
-        break;
-      }
-    }
-    var plantFilter = [];
-    for (let i = 0; i < afFilters.length; i++) {
-      if (afFilters[i].operation.logs.plant_id == plant) {
-        plantFilter.push(afFilters[i]);
-      }
-    }
-    afFilters = plantFilter;
-  } else {
-    afFilters = plantData;
+ landsData.find(function(value, index) {
+  if(value.land.province == province || province == "all"){
+    fPro.push(value)
   }
-  if (landName != "all") {
-    for (let i = 0; i < landsData.length; i++) {
-      if (landsData[i].land.name == landName) {
-        afFilters.push(landsData[i]);
-      }
-    }
-  } else {
-    afFilters = landsData;
+  if(value.land.district == district || district == "all"){
+    fDis.push(value)
   }
+    if(value.land.name.includes(landName) || landName == "all"){
+      fName.push(value)
+    }
+    if(plant == "all"){
+      fPlant.push(value)
+    }else{
+      plantData.find(function(v,i){
+        if(v._id == value.operation.logs.plant_id && v.name == plant){
+          fPlant.push(value)
+        }
+      })
+    }
 
-  console.log(afFilters)
+  });
 
-  res.status(200).send(afFilters);
+  var arr = fDis.filter(value => fPro.includes(value))
+  arr = arr.filter(value => fName.includes(value))
+  arr = arr.filter(value => fPlant.includes(value))
+console.log("------------")
+  console.log(arr)
+console.log("------------")
+  res.status(200).send(arr);
+
+
+  // var afFilters = [];
+  // if (province != "all") {
+  //   for (let i = 0; i < landsData.length; i++) {
+  //     if (landsData[i].land.province == province) {
+  //       afFilters.push(landsData[i]);
+  //     }
+  //   }
+  // } else {
+  //   afFilters = landsData;
+  // }
+  // if (district != "all") {
+  //   var districtFilter = [];
+  //   for (let i = 0; i < afFilters.length; i++) {
+  //     if (afFilters[i].land.district == district) {
+  //       districtFilter.push(afFilters[i]);
+  //     }
+  //   }
+  //   afFilters = districtFilter;
+  // }
+
+  // if (plant != "all") {
+  //   for (let j = 0; j < plantData.length; j++) {
+  //     if (plantData[j].name == plant) {
+  //       plant = plantData[j]._id;
+  //       break;
+  //     }
+  //   }
+  //   var plantFilter = [];
+  //   for (let i = 0; i < afFilters.length; i++) {
+  //     if (afFilters[i].operation.logs.plant_id == plant) {
+  //       plantFilter.push(afFilters[i]);
+  //     }
+  //   }
+  //   afFilters = plantFilter;
+  // } else {
+  //   afFilters = plantData;
+  // }
+  // if (landName != "all") {
+  //   for (let i = 0; i < landsData.length; i++) {
+  //     if (landsData[i].land.name == landName) {
+  //       afFilters.push(landsData[i]);
+  //     }
+  //   }
+  // } else {
+  //   afFilters = landsData;
+  // }
+
+  // console.log(afFilters)
+
+  // res.status(200).send(afFilters);
 });
 
 module.exports = router;
