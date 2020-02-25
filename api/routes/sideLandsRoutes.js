@@ -61,16 +61,16 @@ router.post("/filter", (req, res, next) => {
   var fPlant = [];
 
  landsData.find(function(value, index) {
-  if(value.land.province == province || province == "all"){
+  if(value.land.province == province || province == "ทั้งหมด"){
     fPro.push(value)
   }
-  if(value.land.district == district || district == "all"){
+  if(value.land.district == district || district == "ทั้งหมด"){
     fDis.push(value)
   }
-    if(value.land.name.includes(landName) || landName == "all"){
+    if(value.land.name.includes(landName) || landName == "ทั้งหมด"){
       fName.push(value)
     }
-    if(plant == "all"){
+    if(plant == "ทั้งหมด"){
       fPlant.push(value)
     }else{
       plantData.find(function(v,i){
