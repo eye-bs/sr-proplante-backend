@@ -236,6 +236,7 @@ router.put("/:managerid", (req, res, next) => {
   var managerInfo = {
     _id: managerId,
     name: req.body.name,
+    active:true,
     image: req.body.image,
     contact_info: req.body.contact_info
   };
