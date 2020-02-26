@@ -12,7 +12,10 @@ const operationCollection = require("../models/operationCycleModels");
 router.post("/new/:ownerid", (req, res, next) => {
   var owner_id = req.params.ownerid;
   var newCode = generateCode();
-  var contactObj = { address: "", phone: "" };
+  var contactObj = {
+    address: "",
+    phone: ""
+  };
   var managerObj = {
     _id: newCode,
     name: "",
@@ -20,21 +23,23 @@ router.post("/new/:ownerid", (req, res, next) => {
     active: false,
     contact_info: contactObj
   };
-  managerCollection.update(
-    { owner_id: owner_id },
-    {
+  managerCollection.update({
+      owner_id: owner_id
+    }, {
       $push: {
         managers: managerObj
       }
     },
-    function(err, docs) {
+    function (err, docs) {
       if (err) {
         res.status(500).send(err.message);
       } else {
         if (docs.n == 0) {
           res.status(400).send("something went wrong");
         } else {
-          res.status(200).send({ manager_code: managerObj._id });
+          res.status(200).send({
+            manager_code: managerObj._id
+          });
         }
       }
     }
@@ -56,10 +61,13 @@ function generateCode() {
 router.post("/login", (req, res, next) => {
   var managerId = req.body.id;
   if (managerId.length == 8) {
-    managerCollection.find(
-      { "managers._id": managerId },
-      { owner_id: 1, "managers.$": 1 },
-      function(err, docs) {
+    managerCollection.find({
+        "managers._id": managerId
+      }, {
+        owner_id: 1,
+        "managers.$": 1
+      },
+      function (err, docs) {
         if (err) {
           res.status(500).send(err.message);
         } else {
@@ -68,26 +76,29 @@ router.post("/login", (req, res, next) => {
           } else {
             docs = docs[0];
             if (docs.managers[0].name == "") {
-              res.status(200).send({ first_login: true });
+              res.status(200).send({
+                first_login: true
+              });
             } else {
               var data = docs.managers[0];
-              res.status(200).send([
-                {
-                  owner_id: docs.owner_id,
-                  first_login: false,
-                  manager: data
-                }
-              ]);
+              res.status(200).send([{
+                owner_id: docs.owner_id,
+                first_login: false,
+                manager: data
+              }]);
             }
           }
         }
       }
     );
   } else if (managerId.length == 10) {
-    managerCollection.find(
-      { "managers.contact_info.phone": managerId },
-      { owner_id: 1, "managers.$": 1 },
-      function(err, docs) {
+    managerCollection.find({
+        "managers.contact_info.phone": managerId
+      }, {
+        owner_id: 1,
+        "managers.$": 1
+      },
+      function (err, docs) {
         if (err) {
           res.status(500).send(err.message);
         } else {
@@ -103,6 +114,7 @@ router.post("/login", (req, res, next) => {
               };
               result.push(obj);
             }
+
             res.status(200).send(result);
           }
         }
@@ -131,92 +143,79 @@ router.post("/register/:managerid", (req, res, next) => {
       contact_info: contact_info
     };
 
-    managerCollection.findOne({ "managers._id": managerId }, (err, result) => {
-      if (err) {
-        res.send(err);
-      } else {
-        if (result == null) {
-          res.status(404).send("user not found");
-        } else {
-          var managers = result.managers;
-          var newMembers = true;
-          for (i in managers) {
-            if (managers[i].contact_info.phone == contact_info.phone) {
-              res.status(400).send("already registered");
-              newMembers = false;
-              break;
-            }
-            if (managers[i]._id == managerId && managers[i].name != "") {
-              res.status(400).send("already registered");
-              newMembers = false;
-              break;
-            }
-          }
-          if (newMembers) {
-            managerCollection.update(
-              { "managers._id": managerId },
-              {
-                $set: {
-                  "managers.$[target]": managerInfo
+    managerCollection.findOne({
+      "managers.contact_info.phone": contact_info.phone
+    }, (err, doc) => {
+      if (doc.length == 0) {
+        managerCollection.findOne({
+          "managers._id": managerId
+        }, (err, result) => {
+          if (err) {
+            res.send(err);
+          } else {
+            if (result == null) {
+              res.status(404).send("user not found");
+            } else {
+              var managers = result.managers;
+              var newMembers = true;
+              for (i in managers) {
+                if (managers[i].contact_info.phone == contact_info.phone) {
+                  res.status(400).send("already registered");
+                  newMembers = false;
+                  break;
                 }
-              },
-              {
-                multi: false,
-                arrayFilters: [{ "target._id": managerId }]
-              },
-              function(err, docs) {
-                if (err) {
-                  res.status(500).send(err.message);
-                } else {
-                  if (docs == null) {
-                    res.status(404).send("user not found");
-                  } else {
-                    res.status(201).send("registered");
-                  }
+                if (managers[i]._id == managerId && managers[i].name != "") {
+                  res.status(400).send("already registered");
+                  newMembers = false;
+                  break;
                 }
               }
-            );
-          }else{
-            res.status(404).send("Something went wrong");
+              if (newMembers) {
+                managerCollection.update({
+                    "managers._id": managerId
+                  }, {
+                    $set: {
+                      "managers.$[target]": managerInfo
+                    }
+                  }, {
+                    multi: false,
+                    arrayFilters: [{
+                      "target._id": managerId
+                    }]
+                  },
+                  function (err, docs) {
+                    if (err) {
+                      res.status(500).send(err.message);
+                    } else {
+                      if (docs == null) {
+                        res.status(404).send("user not found");
+                      } else {
+                        res.status(201).send("registered");
+                      }
+                    }
+                  }
+                );
+              } else {
+                res.status(404).send("Something went wrong");
+              }
+            }
           }
-        }
-
-        // if (result.length != 0) {
-        // res.status(400).send("already registered");
-        // } else {
-        // managerCollection.findOneAndUpdate(
-        //   { "managers._id": managerId },
-        //   {
-        //     $set: {
-        //       "managers.$[target]": managerInfo
-        //     }
-        //   },
-        //   {
-        //     multi: false,
-        //     arrayFilters: [{ "target._id": managerId }]
-        //   },
-        //   function(err, docs) {
-        //     if (err) {
-        //       res.status(500).send(err.message);
-        //     } else {
-        //       if (docs == null) {
-        //         res.status(404).send("user not found");
-        //       } else {
-        //         res.status(201).send(docs);
-        //       }
-        //     }
-        //   }
-        // );
-        // }
+        });
+      } else {
+        res.status(400).send("already registered");
       }
-    });
+    })
+
+
   }
 });
 
 //all managers
 router.get("/all/:ownerid", (req, res, next) => {
   var owner_id = req.params.ownerid;
-  managerCollection.findOne({ owner_id: owner_id }, (err, manager) => {
+  managerCollection.findOne({
+    owner_id: owner_id
+  }, (err, manager) => {
     if (err) {
       res.status(500).send(err.message);
     } else {
@@ -236,23 +235,24 @@ router.put("/:managerid", (req, res, next) => {
   var managerInfo = {
     _id: managerId,
     name: req.body.name,
-    active:true,
+    active: true,
     image: req.body.image,
     contact_info: req.body.contact_info
   };
 
-  managerCollection.findOneAndUpdate(
-    { owner_id: owner_id },
-    {
+  managerCollection.findOneAndUpdate({
+      owner_id: owner_id
+    }, {
       $set: {
         "managers.$[target]": managerInfo
       }
-    },
-    {
+    }, {
       multi: false,
-      arrayFilters: [{ "target._id": managerId }]
+      arrayFilters: [{
+        "target._id": managerId
+      }]
     },
-    function(err, docs) {
+    function (err, docs) {
       if (err) {
         res.status(500).send(err.message);
       } else {
@@ -269,18 +269,19 @@ router.put("/:managerid", (req, res, next) => {
 router.delete("/quit/:managerid", (req, res) => {
   var owner_id = req.query.owner;
   var managerId = req.params.managerid;
-  managerCollection.findOneAndUpdate(
-    { owner_id: owner_id },
-    {
+  managerCollection.findOneAndUpdate({
+      owner_id: owner_id
+    }, {
       $set: {
         "managers.$[target].active": false
       }
-    },
-    {
+    }, {
       multi: false,
-      arrayFilters: [{ "target._id": managerId }]
+      arrayFilters: [{
+        "target._id": managerId
+      }]
     },
-    function(err, docs) {
+    function (err, docs) {
       if (err) {
         res.status(500).send(err.message);
       } else {
@@ -299,9 +300,15 @@ router.delete("/:managerid", (req, res, next) => {
   var owner_id = req.query.owner;
   var managerId = req.params.managerid;
 
-  managerCollection.update(
-    { owner_id: owner_id },
-    { $pull: { managers: { _id: managerId } } },
+  managerCollection.update({
+      owner_id: owner_id
+    }, {
+      $pull: {
+        managers: {
+          _id: managerId
+        }
+      }
+    },
     (err, result) => {
       if (err) {
         res.status(500).send(err.message);
@@ -320,10 +327,13 @@ router.delete("/:managerid", (req, res, next) => {
 router.get("/detail/:managerid", (req, res, next) => {
   var managerId = req.params.managerid;
   var owner_id = req.query.owner;
-  managerCollection.find(
-    { owner_id: owner_id, "managers._id": managerId },
-    { "managers.$": 1 },
-    function(err, docs) {
+  managerCollection.find({
+      owner_id: owner_id,
+      "managers._id": managerId
+    }, {
+      "managers.$": 1
+    },
+    function (err, docs) {
       if (err) {
         res.status(500).send(err.message);
       } else {
@@ -340,9 +350,11 @@ router.get("/detail/:managerid", (req, res, next) => {
 
 router.get("/findowner/:managerId", (req, res, next) => {
   var managerId = req.params.managerId;
-  managerCollection.findOne(
-    { "managers._id": managerId },
-    { owner_id: 1 },
+  managerCollection.findOne({
+      "managers._id": managerId
+    }, {
+      owner_id: 1
+    },
     (err, data) => {
       res.send(data);
     }
