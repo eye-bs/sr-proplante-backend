@@ -230,22 +230,47 @@ router.put("/activity/:plantid", (req, res, next) => {
   var plant_id = req.params.plantid;
   var tasks = req.body.tasks;
   var duration = parseInt(req.body.duration);
-
-  plantCollection.findOne(
+  plantCollection.update(
     { "plants._id": plant_id },
-    { "plants.$": 1 },
-    (err, plant) => {
+    {
+      $set: {
+        "plants.$[ptarget].activities.$[target].tasks": tasks,
+        "plants.$[ptarget].activities.$[target].duration": duration
+      }
+    },
+    {
+      multi: false,
+      arrayFilters: [{ "target._id": activity_id },{"ptarget._id":plant_id}]
+    },
+    (err, activities) => {
       if (err) {
         res.status(500).send(err.message);
       } else {
-        if (plant.plants[0].activities.length != 0) {
-          editActivity(plant.plants[0]);
-        } else {
-          res.status(404).send("plant id not found");
+        console.log(activities)
+        if(activities.n == 1){
+          res.status(200).send("edited");
+        }else{
+          res.send(400).send(activities)
         }
       }
     }
   );
+
+  // plantCollection.findOne(
+  //   { "plants._id": plant_id },
+  //   { "plants.$": 1 },
+  //   (err, plant) => {
+  //     if (err) {
+  //       res.status(500).send(err.message);
+  //     } else {
+  //       if (plant.plants[0].activities.length != 0) {
+  //         editActivity(plant.plants[0]);
+  //       } else {
+  //         res.status(404).send("plant id not found");
+  //       }
+  //     }
+  //   }
+  // );
 
   function editActivity(plant) {
     var activities = plant.activities;
@@ -259,14 +284,26 @@ router.put("/activity/:plantid", (req, res, next) => {
         activities[i] = newActivity;
       }
     }
+    var newActivity = {
+      _id: activity_id,
+      tasks: tasks,
+      duration: duration
+    };
     plant.activities = activities;
-
+    // { land_id: land_id, "logs.activities._id": activity_id },
+    // {
+    //   $set: { "logs.activities.$[target].status": "เลยกำหนด" }
+    // },
     plantCollection.update(
       { "plants._id": plant_id },
       {
         $set: {
-          plants: plant
+          "plants.$[target]": newActivity
         }
+      },
+      {
+        multi: false,
+        arrayFilters: [{ "target._id": activity_id }]
       },
       (err, activities) => {
         if (err) {
