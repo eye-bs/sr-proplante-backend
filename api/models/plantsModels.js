@@ -13,7 +13,11 @@ var PlantSchema = new Schema({
     activities: [{
       _id: String,
       tasks: String,
-      duration: Number
+      duration: Number,
+      start_date: Number,
+      repeat: Boolean,
+      repeat_in: Number,
+      num_of_date : Number
     }]
   }]
 });

@@ -16,8 +16,10 @@ router.post("/start/:landid", (req, res, next) => {
 
   var plantId = req.body.plant;
   var start_date = req.body.start_date;
+  var end_date = req.body.end_date;
   var expected = req.body.expected_product;
   var _id = new mongoose.Types.ObjectId();
+
 
   if (
     plantId == undefined ||
@@ -29,7 +31,7 @@ router.post("/start/:landid", (req, res, next) => {
     var operationObj = {
       plant_id: plantId,
       start_date: start_date,
-      end_date: null,
+      end_date: end_date,
       expected_product: expected,
       real_product: null,
       performance: null,
@@ -37,8 +39,7 @@ router.post("/start/:landid", (req, res, next) => {
     };
 
     plantCollection
-      .aggregate([
-        {
+      .aggregate([{
           $match: {
             owner_id: owner_id,
             "plants._id": plantId
@@ -65,7 +66,7 @@ router.post("/start/:landid", (req, res, next) => {
         if (numOfActivity.length != 0) {
           var objActivity = setActivityDetail(operationObj, numOfActivity);
           operationObj.activities = objActivity;
-          //res.status(200).send(operationObj);
+          //res.send(objActivity)
           startCycle();
         } else {
           res.status(400).send("activity is null");
@@ -78,12 +79,11 @@ router.post("/start/:landid", (req, res, next) => {
       });
 
     function startCycle() {
-      operationCollection.find(
-        {
+      operationCollection.find({
           land_id: land_id
         },
 
-        function(err, item) {
+        function (err, item) {
           if (err) {
             res.status(500).send(err.message);
           } else {
@@ -97,17 +97,13 @@ router.post("/start/:landid", (req, res, next) => {
                   .send("can not start new cycle because it is exists");
               } else {
                 operationCollection
-                  .findOneAndUpdate(
-                    {
-                      land_id: land_id
-                    },
-                    {
-                      $set: {
-                        logs: operationObj
-                      }
-                      // $unset:{logs:""}
+                  .findOneAndUpdate({
+                    land_id: land_id
+                  }, {
+                    $set: {
+                      logs: operationObj
                     }
-                  )
+                  })
                   .exec()
                   .then(docs => {
                     if (docs == null) {
@@ -119,7 +115,7 @@ router.post("/start/:landid", (req, res, next) => {
                     }
                   })
                   .catch(err => {
-                    res.status(500).send(err.message);
+                    res.status(500).send(err);
                   });
               }
             }
@@ -132,36 +128,51 @@ router.post("/start/:landid", (req, res, next) => {
 
 function setActivityDetail(cycle, plant) {
   var activities = [];
-  for (let i = 0; i < plant.length; i++) {
-    var duration = plant[i].duration * 7 - 7;
-    var startCycle = new Date(cycle.start_date);
-    startCycle.setDate(startCycle.getDate() + duration);
-    var activityDate = getMonday(startCycle);
-
-    var tzo = -activityDate.getTimezoneOffset() / 60;
-    tzo = (tzo + "").padStart(2, "0");
-    activityDate = new Date(
-      activityDate.getTime() - activityDate.getTimezoneOffset() * 60000
-    );
-    var tsp = activityDate.toISOString();
-    tsp = tsp.replace("Z", `+${tzo}:00`);
-
-    var obj = {
-      _id: plant[i]._id,
-      task: plant[i].tasks,
-      status: "ยังไม่ทำ",
-      activity_type: "normal",
-      start_date: tsp,
-      end_date: null,
-      notes: null,
-      images: [],
-      manager_id: null
-    };
-    activities.push(obj);
-    if (i == plant.length - 1) {
-      return activities;
+  var start_cy = new Date(cycle.start_date);
+  var end_cy = new Date(cycle.end_date);
+  plant.forEach(pl => {
+    var ac_startdate = new Date(start_cy.toISOString())
+    ac_startdate.setDate(ac_startdate.getDate() + pl.start_date);
+    var ac_enddate = new Date(ac_startdate.toISOString())
+    ac_enddate.setDate(ac_enddate.getDate() + pl.num_of_date - 1);
+    if (pl.repeat) {
+      while (ac_enddate < end_cy) {
+        var obj = {
+          _id: new mongoose.Types.ObjectId(),
+          activity_id: pl._id,
+          task: pl.tasks,
+          status: "ยังไม่ทำ",
+          activity_type: "normal",
+          start_date: ac_startdate.toISOString(),
+          end_date: ac_enddate.toISOString(),
+          notes: null,
+          images: [],
+          manager_id: null
+        };
+        activities.push(obj);
+        ac_startdate.setDate(ac_startdate.getDate() + pl.repeat_in)
+        ac_enddate = new Date(ac_startdate.toISOString())
+        ac_enddate.setDate(ac_enddate.getDate() + pl.num_of_date - 1)
+      }
+    } else {
+      var obj = {
+        _id: new mongoose.Types.ObjectId(),
+        activity_id: pl._id,
+        task: pl.tasks,
+        status: "ยังไม่ทำ",
+        activity_type: "normal",
+        start_date: ac_startdate.toISOString(),
+        end_date: ac_enddate.toISOString(),
+        notes: null,
+        images: [],
+        manager_id: null
+      };
+      activities.push(obj);
     }
-  }
+  })
+  activities.sort(dynamicSort("start_date"));
+  return activities
+
 }
 
 // harvested
@@ -177,12 +188,11 @@ router.post("/harvested/:landid", (req, res, next) => {
   if (end_date == undefined || real_product == undefined) {
     res.status(400).send("end_date or real_product must be specified");
   } else {
-    operationCollection.findOneAndUpdate(
-      {
+    operationCollection.findOneAndUpdate({
         land_id: land_id
       },
       harvestedData,
-      function(err, docs) {
+      function (err, docs) {
         if (err) {
           res.status(500).send(err.message);
         } else {
@@ -205,21 +215,27 @@ router.post("/harvested/:landid", (req, res, next) => {
       var logs = docs.logs;
       var activities = logs.activities;
       var plant_id = logs.plant_id;
-      plantCollection.findOne(
-        { "plants._id": plant_id },
-        { "plants.$": 1 },
+      plantCollection.findOne({
+          "plants._id": plant_id
+        }, {
+          "plants.$": 1
+        },
         (err, plant) => {
           if (err) {
             res.status(500).send(err.message);
           } else {
             console.log(plant)
-            var plantName = { plant_name: plant.plants[0].name };
+            var plantName = {
+              plant_name: plant.plants[0].name
+            };
             var newFilter = Object.assign({}, plantName, logs);
             for (i in activities) {
               for (j in plant.plants[0].activities) {
                 var plantAc = plant.plants[0].activities[j];
                 if (plantAc._id == activities[i]._id) {
-                  var task = { task: plantAc.tasks };
+                  var task = {
+                    task: plantAc.tasks
+                  };
                   var activity = activities[i];
 
                   var duration = plantAc.duration * 7 - 7;
@@ -231,7 +247,7 @@ router.post("/harvested/:landid", (req, res, next) => {
                   tzo = (tzo + "").padStart(2, "0");
                   activityDate = new Date(
                     activityDate.getTime() -
-                      activityDate.getTimezoneOffset() * 60000
+                    activityDate.getTimezoneOffset() * 60000
                   );
                   var tsp = activityDate.toISOString();
                   tsp = tsp.replace("Z", `+${tzo}:00`);
@@ -260,29 +276,27 @@ router.post("/harvested/:landid", (req, res, next) => {
     }
 
     function sendReport(logs) {
-      reportCollection.update(
-        {
+      reportCollection.update({
           land_id: land_id
-        },
-        {
+        }, {
           $push: {
             logs: logs
           }
         },
-        function(err, docs) {
+        function (err, docs) {
           if (err) {
             res.status(500).send(err.message);
           } else {
-            operationCollection.update(
-              {
+            operationCollection.update({
                 land_id: land_id
-              },
-              {
+              }, {
                 $set: {
-                  logs: {activities:[]}
+                  logs: {
+                    activities: []
+                  }
                 }
               },
-              function(err, docs) {
+              function (err, docs) {
                 if (err) {
                   res.status(500).send(err.message);
                 } else {
@@ -300,13 +314,14 @@ router.post("/harvested/:landid", (req, res, next) => {
     }
   }
 });
+
 function dynamicSort(property) {
   var sortOrder = 1;
   if (property[0] === "-") {
     sortOrder = -1;
     property = property.substr(1);
   }
-  return function(a, b) {
+  return function (a, b) {
     /* next line works with strings and numbers,
      * and you may want to customize it to your needs
      */
@@ -315,6 +330,7 @@ function dynamicSort(property) {
     return result * sortOrder;
   };
 }
+
 function getMonday(d) {
   d = new Date(d);
   var day = d.getDay(),
@@ -325,7 +341,11 @@ function getMonday(d) {
 router.post("/percent", (req, res) => {
   var land_id = req.body.qland;
   operationCollection.aggregate(
-    [{ $match: { $or: land_id } }],
+    [{
+      $match: {
+        $or: land_id
+      }
+    }],
     (err, result) => {
       var done = 0;
       var total = 0;
@@ -335,7 +355,7 @@ router.post("/percent", (req, res) => {
         var activities = result[i].logs.activities || undefined;
         if (activities == undefined) {
           var obj = {
-            land_id: land_id[i],
+            land_id: land_id[i].land_id,
             percent: 0
           };
           response.push(obj);
@@ -362,11 +382,10 @@ router.post("/percent", (req, res) => {
 //get operation cycle
 router.get("/:landid", (req, res, next) => {
   var land_id = req.params.landid;
-  operationCollection.findOne(
-    {
+  operationCollection.findOne({
       land_id: land_id
     },
-    function(err, docs) {
+    function (err, docs) {
       if (err) {
         res.status(500).send(err.message);
       } else {

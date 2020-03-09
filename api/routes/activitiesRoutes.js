@@ -125,25 +125,27 @@ router.get("/:ownerId", (req, res, next) => {
 
   function setResult(lands, op, plants) {
     var response = [];
+    console.log(plants)
     op.forEach(operation =>{
       var activities = operation.activities;
       var plant_id = operation.plant_id;
       activities.forEach(activity =>{
         var object;
-        var plant = plants.find(x => x._id == activity._id) || plants.find(x => x.plant_id == plant_id);
-        var simpleStartDate = computeDurationDate(operation.start_date , plant.duration);
+        var plant = plants.find(x => x._id == activity.activity_id) || plants.find(x => x.plant_id == plant_id);
         object = {
           land_name: lands[operation._id],
           land_id: operation._id,
           activity_id: activity._id,
-          start_date: activity.activity_type == "emergency" ? activity.end_date : simpleStartDate,
+          plant_ac_id: activity.activity_id,
+          start_date: activity.start_date,
           end_date: activity.end_date,
-          plant_name: plant.plant_name,
+          plant_name: plant ? plant.plant_name : "",
           task: activity.task || plant.tasks,
           status: activity.status,
           images: activity.images,
           manager_id: activity.manager_id,
-          notes: activity.notes
+          notes: activity.notes,
+          repeat_in : activity.activity_type == "normal" ? plant.repeat_in : 0
         };
         response.push(object);
       })
@@ -221,6 +223,7 @@ router.post("/emergency/:landid", (req, res, next) => {
       task: task,
       status: status,
       activity_type: "emergency",
+      start_date:end_date,
       end_date: end_date,
       notes: notes,
       images: images,

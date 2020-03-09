@@ -15,9 +15,11 @@ var operationCycleSchema = new Schema({
     activities: [
       {
         _id: String,
+        activity_id:String,
         task: String,
         status: String,
         activity_type: String,
+        start_date:String,
         end_date: String,
         notes: String,
         images: [String],

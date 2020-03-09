@@ -15,6 +15,7 @@ var reportSchema = new Schema({
     activities: [
       {
         _id: String,
+        activity_id: String,
         task: String,
         status: String,
         activity_type: String,
