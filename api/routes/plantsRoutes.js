@@ -243,7 +243,9 @@ router.post("/activity/:plantid", async (req, res) => {
     function updateOperationsActivity(landsOperation) {
 
       var indexKey = Object.keys(landsOperation);
-
+      if(indexKey.length == 0){
+       return res.status(200).send("activity Created")
+      }
       indexKey.forEach((land_id,index) => {
 
         var logs = landsOperation[land_id].logs
